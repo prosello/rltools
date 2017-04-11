@@ -37,7 +37,7 @@ class GaussianMLPPolicy(StochasticPolicy, EzPickle):
             net = nn.FeedforwardNet(flat.output, flat.output_shape, self.hidden_spec)
         with tf.variable_scope('out'):
             mean_layer = nn.AffineLayer(net.output, net.output_shape, self.action_space.shape,
-                                        Winitializer=tf.zeros_initializer, binitializer=None)
+                                        Winitializer=tf.zeros_initializer(), binitializer=None)
 
         means_B_Da = mean_layer.output
 
@@ -48,7 +48,7 @@ class GaussianMLPPolicy(StochasticPolicy, EzPickle):
             logstdevs_1_Da)  # Required for stability of kl computations
         stdevs_B_Da = tf.ones_like(means_B_Da) * stdevs_1_Da
 
-        actiondist_B_Pa = tf.concat(1, [means_B_Da, stdevs_B_Da])
+        actiondist_B_Pa = tf.concat(axis=1, values=[means_B_Da, stdevs_B_Da])
         return actiondist_B_Pa
 
     def _extract_actiondist_params(self, actiondist_B_Pa):
@@ -108,9 +108,9 @@ class GaussianGRUPolicy(StochasticPolicy, EzPickle):
     def _make_actiondist_ops(self, obs_B_H_Df):
         B = tf.shape(obs_B_H_Df)[0]
         H = tf.shape(obs_B_H_Df)[1]
-        flatobs_B_H_Df = tf.reshape(obs_B_H_Df, tf.pack([B, H, -1]))
+        flatobs_B_H_Df = tf.reshape(obs_B_H_Df, tf.stack([B, H, -1]))
         if self.state_include_action:
-            net_in = tf.concat(2, [flatobs_B_H_Df, self._prev_actions_B_H_Da])
+            net_in = tf.concat(axis=2, values=[flatobs_B_H_Df, self._prev_actions_B_H_Da])
             net_shape = (np.prod(self.observation_space.shape) + self.action_space.shape[0],)
         else:
             net_in = flatobs_B_H_Df
@@ -129,7 +129,7 @@ class GaussianGRUPolicy(StochasticPolicy, EzPickle):
         stdevs_1_Da = self.min_stdev + tf.exp(
             logstdevs_1_Da)  # Required for stability of kl computations
         stdevs_B_H_Da = tf.ones_like(means_B_H_Da) * tf.expand_dims(stdevs_1_Da, 1)
-        actiondist_B_H_Da = tf.concat(2, [means_B_H_Da, stdevs_B_H_Da])
+        actiondist_B_H_Da = tf.concat(axis=2, values=[means_B_H_Da, stdevs_B_H_Da])
 
         steplogstdevs_1_Da = tf.get_variable(
             'steplogstdevs_1_Da', shape=(1, self.action_space.shape[0]),

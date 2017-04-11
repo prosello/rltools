@@ -135,7 +135,7 @@ class FlattenLayer(Layer):
             util.header('Flatten(new_shape=%s)' % str(self._output_shape))
         pre_shape = tf.shape(input_)[:self._outdim - 1:]
         to_flatten = tf.reduce_prod(tf.shape(input_)[self._outdim - 1:])
-        self._output = tf.reshape(input_, tf.concat(0, [pre_shape, tf.pack([to_flatten])]))
+        self._output = tf.reshape(input_, tf.concat(axis=0, values=[pre_shape, tf.stack([to_flatten])]))
 
     @property
     def output(self):
@@ -158,7 +158,7 @@ class AffineLayer(Layer):
             if Winitializer is None:
                 Winitializer = tf.contrib.layers.xavier_initializer()
             if binitializer is None:
-                binitializer = tf.zeros_initializer
+                binitializer = tf.zeros_initializer()
             self.W_Di_Do = tf.get_variable('W', shape=[input_shape[0], output_shape[0]],
                                            initializer=Winitializer)
             self.b_1_Do = tf.get_variable('b', shape=[1, output_shape[0]], initializer=binitializer)
@@ -254,7 +254,7 @@ class GRULayer(Layer):
             input_shape = self._input_shape  # (B, steps) removed
             input_dim = np.prod(input_shape)
             # Initial Hidden state weights
-            self.h0 = tf.get_variable('h0', shape=[hidden_units], initializer=tf.zeros_initializer,
+            self.h0 = tf.get_variable('h0', shape=[hidden_units], initializer=tf.zeros_initializer(),
                                       trainable=hidden_init_trainable)
 
             with tf.variable_scope('reset'):
@@ -284,16 +284,16 @@ class GRULayer(Layer):
                 self.b_c_T = tf.get_variable('b_c', shape=[hidden_units],
                                              initializer=tf.constant_initializer(0.))
 
-            self.W_x_ruc_Di_3T = tf.concat(1, [self.W_xr_Di_T, self.W_xu_Di_T, self.W_xc_Di_T])
-            self.W_h_ruc_T_3T = tf.concat(1, [self.W_hrT_T, self.W_huT_T, self.W_hcT_T])
+            self.W_x_ruc_Di_3T = tf.concat(axis=1, values=[self.W_xr_Di_T, self.W_xu_Di_T, self.W_xc_Di_T])
+            self.W_h_ruc_T_3T = tf.concat(axis=1, values=[self.W_hrT_T, self.W_huT_T, self.W_hcT_T])
 
         self._output_shape = (self._hidden_units,)
 
     def step(self, hprev, x):
         x_ruc = tf.matmul(x, self.W_x_ruc_Di_3T)
         h_ruc = tf.matmul(hprev, self.W_h_ruc_T_3T)
-        x_r_Di_T, x_u_Di_T, x_c_Di_T = tf.split(split_dim=1, num_split=3, value=x_ruc)
-        h_r, h_u, h_c = tf.split(split_dim=1, num_split=3, value=h_ruc)
+        x_r_Di_T, x_u_Di_T, x_c_Di_T = tf.split(axis=1, num_or_size_splits=3, value=x_ruc)
+        h_r, h_u, h_c = tf.split(axis=1, num_or_size_splits=3, value=h_ruc)
         r = self.gate_nonlin(x_r_Di_T + h_r + self.b_r_T)
         u = self.gate_nonlin(x_u_Di_T + h_u + self.b_u_T)
         c = self.hidden_nonlin(x_c_Di_T + r * h_c + self.b_c_T)
@@ -307,7 +307,7 @@ class GRULayer(Layer):
     def output(self):
         """Iterate through hidden states to get outputs for all"""
         input_shape = tf.shape(self._input_B_T_Di)
-        input = tf.reshape(self._input_B_T_Di, tf.pack([input_shape[0], input_shape[1], -1]))
+        input = tf.reshape(self._input_B_T_Di, tf.stack([input_shape[0], input_shape[1], -1]))
         h0s = tf.tile(tf.reshape(self.h0, (1, self._hidden_units)), (input_shape[0], 1))
         # Flatten extra dimension
         shuffled_input = tf.transpose(input, (1, 0, 2))
@@ -331,7 +331,7 @@ class GRUStepLayer(Layer):
     def output(self):
         x, hprev = self.inputs
         n_batch = tf.shape(x)[0]
-        x = tf.reshape(x, tf.pack([n_batch, -1]))
+        x = tf.reshape(x, tf.stack([n_batch, -1]))
         return self._gru_layer.step(hprev, x)
 
     @property
@@ -448,7 +448,7 @@ class GRUNet(Layer):
                 _feature_net = FeedforwardNet(input_B_T_Di, input_shape, layerspec['feature_net'])
                 self._feature_shape = _feature_net.output_shape
                 self._feature = tf.reshape(_feature_net.output,
-                                           tf.pack([tf.shape(self.input_B_T_Di)[0],
+                                           tf.stack([tf.shape(self.input_B_T_Di)[0],
                                                     tf.shape(self.input_B_T_Di)[1],
                                                     self._feature_shape[-1]]))
             else:
@@ -470,7 +470,7 @@ class GRUNet(Layer):
                                                   output_shape=(self._output_dim,),
                                                   Winitializer=None, binitializer=None)
 
-            self._output = tf.reshape(self._output_flat_layer.output, tf.pack(
+            self._output = tf.reshape(self._output_flat_layer.output, tf.stack(
                 (tf.shape(self.input_B_T_Di)[0], tf.shape(self.input_B_T_Di)[1], -1)))
             self._output_shape = (self._output_flat_layer.output_shape[-1],)
             self._step_hidden_layer = self._gru_layer.step_layer(self._step_input,

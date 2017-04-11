@@ -239,7 +239,7 @@ def _start_server():
 
     with tf.Session(config=tfconfig) as sess:
         env, policy, max_traj_len, mode = _loads(s)
-        sess.run(tf.initialize_all_variables())
+        sess.run(tf.global_variables_initializer())
         if isinstance(policy, list):
             action_space = policy[0].action_space
         else:

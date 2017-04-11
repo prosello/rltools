@@ -12,7 +12,7 @@ def test_standardizer():
     s = rltools.nn.Standardizer(D, eps=0)
 
     with tf.Session() as sess:
-        sess.run(tf.initialize_all_variables())
+        sess.run(tf.global_variables_initializer())
         x_N_D = np.random.randn(200, D)
         s.update(sess, x_N_D)
 

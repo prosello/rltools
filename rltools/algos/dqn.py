@@ -134,11 +134,11 @@ class DQNOptimizer(RLAlgorithm):
 
     def _expected_val_ops(self):
             next_action_vals = tf.stop_gradient(self.target_q_network)
-            target_vals = tf.reduce_max(next_action_vals, reduction_indices=[1,]) * self.terminals
+            target_vals = tf.reduce_max(next_action_vals, axis=[1,]) * self.terminals
             return self.rewards + self.disc_tf * target_vals
 
     def _td_err_ops(self):
-        masked_action_vals = tf.reduce_sum(self.q_network * self.action_mask, reduction_indices=[1,])
+        masked_action_vals = tf.reduce_sum(self.q_network * self.action_mask, axis=[1,])
         td_err = masked_action_vals - self.expected_target_vals
         return tf.reduce_mean(tf.square(td_err))
 

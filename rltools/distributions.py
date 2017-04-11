@@ -56,7 +56,7 @@ class Categorical(Distribution):
 
     def kl_expr(self, logprobs1_B_A, logprobs2_B_A, name=None):
         """KL divergence between categorical distributions, specified as log probabilities"""
-        with tf.op_scope([logprobs1_B_A, logprobs2_B_A], name, 'categorical_kl') as scope:
+        with tf.name_scope(values=[logprobs1_B_A, logprobs2_B_A], name=name, default_name='categorical_kl') as scope:
             kl_B = tf.reduce_sum(
                 tf.exp(logprobs1_B_A) * (logprobs1_B_A - logprobs2_B_A), 1, name=scope)
         return kl_B
@@ -93,7 +93,7 @@ class RecurrentCategorical(Distribution):
 
     def kl_expr(self, logprobs1_B_H_A, logprobs2_B_H_A, name=None):
         """KL divergence between categorical distributions, specified as log probabilities"""
-        with tf.op_scope([logprobs1_B_H_A, logprobs2_B_H_A], name, 'categorical_kl') as scope:
+        with tf.name_scope(values=[logprobs1_B_H_A, logprobs2_B_H_A], name=name, default_name='categorical_kl') as scope:
             kl_B_H = tf.reduce_sum(
                 tf.exp(logprobs1_B_H_A) * (logprobs1_B_H_A - logprobs2_B_H_A), 2, name=scope)
         return kl_B_H
@@ -101,8 +101,8 @@ class RecurrentCategorical(Distribution):
     def log_density_expr(self, dist_params_B_H_A, x_B_H_A):
         adim = tf.shape(dist_params_B_H_A)[len(dist_params_B_H_A.get_shape()) - 1]
         flat_logd = self._cat.log_density_expr(
-            tf.reshape(dist_params_B_H_A, tf.pack([-1, adim])),
-            tf.reshape(x_B_H_A, tf.pack([-1, adim])))
+            tf.reshape(dist_params_B_H_A, tf.stack([-1, adim])),
+            tf.reshape(x_B_H_A, tf.stack([-1, adim])))
         return tf.reshape(flat_logd, tf.shape(dist_params_B_H_A)[:2])
 
 
@@ -123,9 +123,9 @@ class Gaussian(Distribution):
         """KL divergence wbw diagonal covariant gaussians"""
         means1, stdevs1 = means1_stdevs1
         means2, stdevs2 = means2_stdevs2
-        with tf.op_scope([means1, stdevs1, means2, stdevs2], name, 'gaussian_kl') as scope:
+        with tf.name_scope(values=[means1, stdevs1, means2, stdevs2], name=name, default_name='gaussian_kl') as scope:
             D = tf.shape(means1)[len(means1.get_shape()) - 1]
-            kl = tf.mul(.5, (tf.reduce_sum(tf.square(stdevs1 / stdevs2), -1) + tf.reduce_sum(
+            kl = tf.multiply(.5, (tf.reduce_sum(tf.square(stdevs1 / stdevs2), -1) + tf.reduce_sum(
                 tf.square((means2 - means1) / stdevs2), -1) + 2. * (tf.reduce_sum(
                     tf.log(stdevs2), -1) - tf.reduce_sum(tf.log(stdevs1), -1)) - tf.to_float(D)),
                         name=scope)
@@ -133,7 +133,7 @@ class Gaussian(Distribution):
 
     def log_density_expr(self, means, stdevs, x, name=None):
         """Log density of diagonal gauss"""
-        with tf.op_scope([means, stdevs, x], name, 'gauss_log_density') as scope:
+        with tf.name_scope(values=[means, stdevs, x], name=name, default_name='gauss_log_density') as scope:
             D = tf.shape(means)[len(means.get_shape()) - 1]
             lognormconsts = -.5 * tf.to_float(D) * np.log(2. * np.pi) + 2. * tf.reduce_sum(
                 tf.log(stdevs), -1)  # log norm consts

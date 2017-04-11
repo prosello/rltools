@@ -25,7 +25,7 @@ class EpsGreedyMLPPolicy(ValuePolicy):
             net = nn.FeedforwardNet(obsfeat_B_Df, self.obsfeat_space.shape, self.hidden_spec)
         with tf.variable_scope('out'):
             out_layer = nn.AffineLayer(net.output, net.output_shape, (self.action_space.n,),
-                                       initializer=tf.zeros_initializer)  # TODO action_space
+                                       initializer=tf.zeros_initializer())  # TODO action_space
         vals_B_Pa = out_layer.output
         return vals_B_Pa
 

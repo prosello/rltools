@@ -76,13 +76,13 @@ class MLPBaseline(Baseline, nn.Model):
     def _make_val_op(self, obs_B_Df, scaled_t_B_1):
         with tf.variable_scope('flat'):
             flat = nn.FlattenLayer(obs_B_Df)
-        net_input = tf.concat(1, [flat.output, scaled_t_B_1])
+        net_input = tf.concat(axis=1, values=[flat.output, scaled_t_B_1])
         net_shape = (flat.output_shape[0] + 1,)
         with tf.variable_scope('hidden'):
             net = nn.FeedforwardNet(net_input, net_shape, self.hidden_spec)
         with tf.variable_scope('out'):
             out_layer = nn.AffineLayer(net.output, net.output_shape, (1,),
-                                       Winitializer=tf.zeros_initializer, binitializer=None)
+                                       Winitializer=tf.zeros_initializer(), binitializer=None)
             assert out_layer.output_shape == (1,)
         return out_layer.output[:, 0]
 

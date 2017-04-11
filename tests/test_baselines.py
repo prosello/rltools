@@ -53,7 +53,7 @@ def run(baseline_cls):
     log_f = rltools.log.TrainingLog(None, [], False)
 
     with tf.Session() as sess:
-        sess.run(tf.initialize_all_variables())
+        sess.run(tf.global_variables_initializer())
         popt.train(sess, log_f, 1)
 
 

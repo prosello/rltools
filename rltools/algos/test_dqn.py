@@ -65,5 +65,5 @@ rltools.util.header(argstr)
 log_f = rltools.log.TrainingLog('test_log.h5', [('args', argstr)], debug=True)
 
 with tf.Session() as sess:
-    sess.run(tf.initialize_all_variables())
+    sess.run(tf.global_variables_initializer())
     dqn_opt.train(sess, log_f, 20)

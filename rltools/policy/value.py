@@ -47,7 +47,7 @@ class ValuePolicy(Policy):
             # For updating vars directly, e.g. for PPO
             self._assign_params = tfutil.unflatten_into_vars(self._flatparams_P, self._param_vars)
 
-            self._tbwriter = tf.train.SummaryWriter(tblog, graph=tf.get_default_graph())
+            self._tbwriter = tf.summary.FileWriter(tblog, graph=tf.get_default_graph())
 
     def update_obsnorm(self, sess, obs_B_Do):
         """Update norms using moving avg"""

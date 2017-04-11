@@ -9,7 +9,7 @@ def logsumexp(a, axis, name=None):
     Like scipy.misc.logsumexp with keepdims=True
     (does NOT eliminate the singleton axis)
     """
-    with tf.op_scope([a, axis], name, 'logsumexp') as scope:
+    with tf.name_scope(values=[a, axis], name=name, default_name='logsumexp') as scope:
         a = tf.convert_to_tensor(a, name='a')
         axis = tf.convert_to_tensor(axis, name='axis')
 
@@ -26,7 +26,7 @@ def lookup_last_idx(a, inds, name=None):
     returns the tensor
     out[i_1,...,i_{n-1}] = a[i_1,...,i_{n-1}, inds[i_1,...,i_{n-1}]]
     """
-    with tf.op_scope([a, inds], name, 'lookup_last_idx') as scope:
+    with tf.name_scope(values=[a, inds], name=name, default_name='lookup_last_idx') as scope:
         a = tf.convert_to_tensor(a, name='a')
         inds = tf.convert_to_tensor(inds, name='inds')
 
@@ -48,8 +48,8 @@ def flatcat(arrays, name=None):
     """
     Flattens arrays and concatenates them in order.
     """
-    with tf.op_scope(arrays, name, 'flatcat') as scope:
-        return tf.concat(0, [tf.reshape(a, [-1]) for a in arrays], name=scope)
+    with tf.name_scope(values=arrays, name=name, default_name='flatcat') as scope:
+        return tf.concat(axis=0, values=[tf.reshape(a, [-1]) for a in arrays], name=scope)
 
 
 def fixedgradients(loss, params):
@@ -68,7 +68,7 @@ def unflatten_into_tensors(flatparams_P, output_shapes, name=None):
     """
     Unflattens a vector produced by flatcat into a list of tensors of the specified shapes.
     """
-    with tf.op_scope([flatparams_P], name, 'unflatten_into_tensors') as scope:
+    with tf.name_scope(values=[flatparams_P], name=name, default_name='unflatten_into_tensors') as scope:
         outputs = []
         curr_pos = 0
         for shape in output_shapes:
@@ -85,7 +85,7 @@ def unflatten_into_vars(flatparams_P, param_vars, name=None):
     """
     Unflattens a vector produced by flatcat into the original variables
     """
-    with tf.op_scope([flatparams_P] + param_vars, name, 'unflatten_into_vars') as scope:
+    with tf.name_scope(values=[flatparams_P] + param_vars, name=name, default_name='unflatten_into_vars') as scope:
         tensors = unflatten_into_tensors(flatparams_P,
                                          [v.get_shape().as_list() for v in param_vars])
         return tf.group(*[v.assign(t) for v, t in util.safezip(param_vars, tensors)], name=scope)

@@ -114,7 +114,7 @@ def main():
     log_f = rltools.log.TrainingLog(args.log, [('args', argstr)])
 
     with tf.Session() as sess:
-        sess.run(tf.initialize_all_variables())
+        sess.run(tf.global_variables_initializer())
         popt.train(sess, log_f, args.save_freq)
 
 
